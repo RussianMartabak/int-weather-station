@@ -4,6 +4,7 @@ const searchButton = document.querySelector(".search-button");
 const isFahrenheit = document.querySelector("#fahrenheit");
 
 searchButton.addEventListener("click", inputHandler);
+window.addEventListener('keydown', keydownHandler)
 
 async function inputHandler(e) {
   if (textInput.value === "") {
@@ -29,6 +30,32 @@ async function inputHandler(e) {
   }
 }
 
+async function keydownHandler(e) {
+  if (e.code === 'Enter') {
+    if (textInput.value === "") {
+      alert("You can't search for nothing!");
+    } else {
+      //if valid
+      let city = textInput.value;
+      //get json if succeed, if 404 return nothing
+      let weatherData = await getWeather(city, isFahrenheit.checked);
+      if (weatherData) {
+        displayWeather(
+          weatherData.name,
+          weatherData.sys.country,
+          weatherData.main.temp,
+          weatherData.weather[0].main,
+          isFahrenheit.checked
+        );
+      } else {
+        displayError();
+      }
+      textInput.value = "";
+      console.log(weatherData);
+    }
+  }
+}
+
 function fromISOtoName(countryCode) {
   let countryData = lookup.byIso(countryCode);
   return countryData.country;
@@ -37,17 +64,22 @@ function fromISOtoName(countryCode) {
 async function getWeather(cityname, inImperial) {
   let unit;
   inImperial ? (unit = "imperial") : (unit = "metric");
-  let response = await fetch(
-    `https://api.openweathermap.org/data/2.5/weather?q=${cityname}&appid=57006b9e3fd14d8514452924a04f7bcb&units=${unit}`,
-    { mode: "cors" }
-  );
-  let data = await response.json();
-  //vanilla fetch seems to not make error, they just return response no matter what
-  if (response.ok) {
-    return data;
-  } else {
-    return;
+  try {
+    let response = await fetch(
+      `https://api.openweathermap.org/data/2.5/weather?q=${cityname}&appid=57006b9e3fd14d8514452924a04f7bcb&units=${unit}`,
+      { mode: "cors" }
+    );
+    let data = await response.json();
+    //vanilla fetch seems to not make error, they just return response no matter what
+    if (response.ok) {
+      return data;
+    } else {
+      return;
+    }
+  } catch(err) {
+    alert(err);
   }
+  
 }
 
 function displayError() {
